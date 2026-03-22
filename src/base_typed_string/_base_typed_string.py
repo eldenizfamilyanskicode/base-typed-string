@@ -39,7 +39,6 @@ class BaseTypedString(str):
 
         return str.__new__(cls, value)
 
-
     @classmethod
     def __get_pydantic_core_schema__(
         cls,
@@ -56,8 +55,13 @@ class BaseTypedString(str):
         Serialization:
         - serializes as plain str
         """
+        del source_type
+        del handler
+
         try:
-            from pydantic_core import core_schema
+            from pydantic_core import (  # pyright: ignore[reportMissingImports]
+                core_schema,
+            )
         except ImportError as import_error:
             raise BaseTypedStringInvariantViolationError(
                 "pydantic-core is required to build BaseTypedString schema."
@@ -82,3 +86,6 @@ class BaseTypedString(str):
         self,
     ) -> tuple[type[BaseTypedString], tuple[str]]:
         return (self.__class__, (str(self),))
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}({str(self)!r})"

@@ -28,6 +28,11 @@ def print_value_state(label: str, value: object) -> None:
     print()
 
 
+def print_runtime_membership(label: str, value: object) -> None:
+    print(f"isinstance({label}, UserName)   : {isinstance(value, UserName)}")
+    print(f"isinstance({label}, str)        : {isinstance(value, str)}")
+
+
 def demonstrate_direct_runtime_identity() -> None:
     print_section("1. direct construction")
 
@@ -36,8 +41,7 @@ def demonstrate_direct_runtime_identity() -> None:
     print_value_state("constructed value", user_name)
     print(f"value == 'alice'                  : {user_name == 'alice'}")
     print(f"type(user_name) is UserName       : {type(user_name) is UserName}")
-    print(f"isinstance(user_name, UserName)   : {isinstance(user_name, UserName)}")
-    print(f"isinstance(user_name, str)        : {isinstance(user_name, str)}")
+    print_runtime_membership("user_name", user_name)
 
 
 def demonstrate_container_and_attribute_behavior() -> None:

@@ -120,6 +120,13 @@ def test_typed_string_has_same_hash_and_equality_as_plain_string() -> None:
     assert hash(typed_value) == hash(plain_value)
 
 
+def test_repr_uses_exact_runtime_subtype_name_and_plain_string_value() -> None:
+    typed_value: AdminUserName = AdminUserName("root")
+
+    rendered_value: str = repr(typed_value)
+
+    assert rendered_value == "AdminUserName('root')"
+
 def test_plain_class_attribute_preserves_exact_runtime_subtype() -> None:
     typed_value: UserName = UserName("alice")
 
@@ -133,3 +140,4 @@ def test_plain_class_attribute_preserves_exact_runtime_subtype() -> None:
         expected_plain_value="alice",
         expected_type=UserName,
     )
+
