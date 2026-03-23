@@ -1,8 +1,8 @@
 # base-typed-string
 
-Strict typed string base class with exact runtime subtype preservation.
-
 `base_typed_string` is a small Python library for building domain-specific string types that remain real `str` objects at runtime.
+
+Strict typed string base class with exact runtime subtype preservation.
 
 It is designed for codebases where values such as `UserName`, `EmailAddress`, `AccountKey`, or `RawInputStr` should be:
 
