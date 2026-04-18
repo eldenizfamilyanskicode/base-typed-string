@@ -54,7 +54,6 @@ domain-specific names in type annotations, while keeping real `str` behavior at 
 - no normalization
 - no regex engine
 - no domain-specific methods
-- no custom JSON layer
 
 This package is intentionally minimal.
 
@@ -398,6 +397,39 @@ assert type(restored_email) is EmailAddress
 ```
 
 ---
+
+## JSON behavior
+
+Since `BaseTypedString` inherits from `str`, standard JSON serialization naturally produces plain JSON strings.
+
+```python
+import json
+
+from base_typed_string import BaseTypedString
+
+
+class EmailAddress(BaseTypedString):
+    pass
+
+
+value: EmailAddress = EmailAddress("hello@example.com")
+serialized_value: str = json.dumps(value)
+restored_value: object = json.loads(serialized_value)
+
+assert serialized_value == '"hello@example.com"'
+assert restored_value == "hello@example.com"
+assert type(restored_value) is str
+```
+
+This behavior is intentional.
+
+JSON is a plain data boundary.
+
+The exact runtime subtype exists only inside Python objects.
+After serialization, values become plain strings and do not carry subtype information.
+
+---
+
 
 ## Public API
 

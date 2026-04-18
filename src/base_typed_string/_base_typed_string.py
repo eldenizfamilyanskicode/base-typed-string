@@ -29,9 +29,9 @@ class BaseTypedString(str):
 
     def __new__(
         cls: type[BaseTypedStringType],
-        value: Any,
+        value: str,
     ) -> BaseTypedStringType:
-        if not isinstance(value, str):
+        if not isinstance(value, str):  # pyright: ignore[reportUnnecessaryIsInstance] runtime boundary guard
             raise BaseTypedStringInvalidInputValueError(
                 "BaseTypedString must be initialized only with str. "
                 f"Got: {type(value).__name__}."

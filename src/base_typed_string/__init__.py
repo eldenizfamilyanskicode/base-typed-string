@@ -12,4 +12,4 @@ __all__: list[str] = [
     "BaseTypedStringInvariantViolationError",
 ]
 
-__version__: str = "0.1.0"
+__version__: str = "0.1.2"
