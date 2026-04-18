@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "base-typed-string"
-version = "0.1.1"
+version = "0.1.2"
 description = "Strict typed string base class with exact runtime subtype preservation and optional Pydantic v2 support."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -40,6 +40,7 @@ pydantic = [
 test = [
     "pytest>=8.0",
     "pytest-cov>=5.0",
+    "pydantic>=2.6,<3",
 ]
 lint = [
     "ruff>=0.5",

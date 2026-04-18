@@ -127,6 +127,7 @@ def test_repr_uses_exact_runtime_subtype_name_and_plain_string_value() -> None:
 
     assert rendered_value == "AdminUserName('root')"
 
+
 def test_plain_class_attribute_preserves_exact_runtime_subtype() -> None:
     typed_value: UserName = UserName("alice")
 
@@ -140,4 +141,3 @@ def test_plain_class_attribute_preserves_exact_runtime_subtype() -> None:
         expected_plain_value="alice",
         expected_type=UserName,
     )
-
