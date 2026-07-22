@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 
 from tests.testing_assertions import assert_exact_typed_string_instance
-from tests.testing_types import Account, AdminUserName, UserName
+from tests.testing_types import Account, AdminUserName, MisleadingUserName, UserName
 
 
 def test_second_level_subclass_has_plain_string_runtime_behavior() -> None:
@@ -126,6 +126,13 @@ def test_repr_uses_exact_runtime_subtype_name_and_plain_string_value() -> None:
     rendered_value: str = repr(typed_value)
 
     assert rendered_value == "AdminUserName('root')"
+
+
+def test_repr_uses_stored_payload_when_subclass_overrides_str() -> None:
+    typed_value = MisleadingUserName("stored-value")
+
+    assert str(typed_value) == "spoofed-display-value"
+    assert repr(typed_value) == "MisleadingUserName('stored-value')"
 
 
 def test_plain_class_attribute_preserves_exact_runtime_subtype() -> None:

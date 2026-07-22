@@ -5,10 +5,11 @@ import pytest
 pytest.importorskip("pydantic")
 pytest.importorskip("pydantic_core")
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic_core import PydanticSerializationError
 
 from tests.testing_assertions import assert_exact_typed_string_instance
-from tests.testing_types import AdminUserName, EmailAddress
+from tests.testing_types import AdminUserName, EmailAddress, MisleadingUserName
 
 
 class ExampleModel(BaseModel):
@@ -24,6 +25,16 @@ class ContactModel(BaseModel):
 
 class AdminExampleModel(BaseModel):
     value: AdminUserName
+
+
+class MisleadingExampleModel(BaseModel):
+    value: MisleadingUserName
+
+
+class NormalizationConfiguredExampleModel(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True, str_to_lower=True)
+
+    value: EmailAddress
 
 
 def test_pydantic_preserves_exact_second_level_subtype() -> None:
@@ -130,3 +141,24 @@ def test_pydantic_serializes_to_plain_strings() -> None:
         '"email_tuple":["tuple@example.com"],'
         '"email_mapping":{"work":"dict@example.com"}}'
     )
+
+
+def test_pydantic_does_not_apply_model_string_normalization() -> None:
+    model = NormalizationConfiguredExampleModel.model_validate({"value": " Alice "})
+
+    assert str.__str__(model.value) == " Alice "
+
+
+def test_pydantic_serialization_uses_stored_payload_not_overridden_str() -> None:
+    model = MisleadingExampleModel.model_validate({"value": "stored-value"})
+
+    assert str(model.value) == "spoofed-display-value"
+    assert model.model_dump() == {"value": "stored-value"}
+    assert model.model_dump_json() == '{"value":"stored-value"}'
+
+
+def test_pydantic_serialization_rejects_invalid_unvalidated_model_state() -> None:
+    invalid_model = ExampleModel.model_construct(value=123)
+
+    with pytest.raises(PydanticSerializationError, match="Expected EmailAddress"):
+        invalid_model.model_dump()

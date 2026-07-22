@@ -1,0 +1,174 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.11.31"
+
+jobs:
+  static-analysis:
+    name: Static analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Install development environment
+        run: uv sync --frozen --extra dev
+
+      - name: Check source release contract
+        run: uv run --frozen python scripts/check_release.py
+
+      - name: Lint
+        run: uv run --frozen ruff check .
+
+      - name: Check formatting
+        run: uv run --frozen ruff format --check .
+
+      - name: Type-check with mypy
+        run: uv run --frozen mypy
+
+      - name: Type-check with Pyright
+        run: uv run --frozen pyright
+
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+          - "3.14"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+          cache-suffix: py${{ matrix.python-version }}
+
+      - name: Install test environment
+        run: uv sync --frozen --extra test
+
+      - name: Run tests
+        run: uv run --frozen pytest
+
+      - name: Run examples
+        if: matrix.python-version == '3.14'
+        run: |
+          uv run --frozen python examples/constrained_usage.py
+          uv run --frozen python examples/pydantic_constrained_usage.py
+
+  minimum-pydantic:
+    name: Pydantic 2.6 floor
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.10"
+          enable-cache: true
+          cache-suffix: pydantic-2.6
+
+      - name: Install test environment
+        run: uv sync --frozen --extra test
+
+      - name: Install minimum supported Pydantic
+        run: uv pip install "pydantic==2.6.0"
+
+      - name: Run tests without resynchronizing the lock
+        run: uv run --no-sync pytest
+
+  distribution:
+    name: Distribution artifacts
+    needs:
+      - static-analysis
+      - test
+      - minimum-pydantic
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv and Python
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          python-version: "3.14"
+          enable-cache: true
+          cache-suffix: distribution
+
+      - name: Install build environment
+        run: uv sync --frozen --extra build
+
+      - name: Read project version
+        id: version
+        shell: bash
+        run: |
+          version="$(uv run --frozen python scripts/check_release.py --print-version)"
+          echo "value=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Build wheel and source distribution
+        run: uv run --frozen python -m build --outdir dist
+
+      - name: Validate distribution metadata
+        run: uv run --frozen twine check --strict dist/*
+
+      - name: Verify and isolated-install both distributions
+        env:
+          EXPECTED_VERSION: ${{ steps.version.outputs.value }}
+        run: >-
+          uv run --frozen python scripts/verify_distribution.py
+          --dist-dir dist
+          --expected-version "${EXPECTED_VERSION}"
+
+      - name: Upload verified distributions
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: distributions-${{ steps.version.outputs.value }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7

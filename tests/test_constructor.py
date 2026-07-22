@@ -6,7 +6,7 @@ import pytest
 
 from base_typed_string import BaseTypedString, BaseTypedStringInvalidInputValueError
 from tests.testing_assertions import assert_exact_typed_string_instance
-from tests.testing_types import AdminUserName, UserName
+from tests.testing_types import AdminUserName, MisleadingUserName, UserName
 
 
 def test_empty_string_is_valid() -> None:
@@ -59,6 +59,18 @@ def test_constructor_accepts_existing_typed_string_instance() -> None:
     assert_exact_typed_string_instance(
         copied_value,
         expected_plain_value="alice",
+        expected_type=UserName,
+    )
+
+
+def test_constructor_copies_stored_payload_not_overridden_str_result() -> None:
+    source_value = MisleadingUserName("stored-value")
+
+    copied_value = UserName(source_value)
+
+    assert_exact_typed_string_instance(
+        copied_value,
+        expected_plain_value="stored-value",
         expected_type=UserName,
     )
 

@@ -4,7 +4,7 @@ import pickle
 
 from base_typed_string import BaseTypedString
 from tests.testing_assertions import assert_exact_typed_string_instance
-from tests.testing_types import AdminUserName, UserName
+from tests.testing_types import AdminUserName, MisleadingUserName, UserName
 
 
 def test_getnewargs_returns_plain_string_tuple() -> None:
@@ -51,3 +51,12 @@ def test_pickle_roundtrip_preserves_exact_second_level_subtype() -> None:
         expected_plain_value="root",
         expected_type=AdminUserName,
     )
+
+
+def test_pickle_uses_stored_payload_when_subclass_overrides_str() -> None:
+    source_value = MisleadingUserName("stored-value")
+
+    restored_value = pickle.loads(pickle.dumps(source_value))
+
+    assert type(restored_value) is MisleadingUserName
+    assert str.__str__(restored_value) == "stored-value"

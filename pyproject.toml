@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "base-typed-string"
-version = "0.1.2"
-description = "Strict typed string base class with exact runtime subtype preservation and optional Pydantic v2 support."
+dynamic = ["version"]
+description = "Callable branded and constrained string base classes with exact runtime subtype preservation."
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
@@ -15,6 +15,9 @@ license = "MIT"
 keywords = [
     "typing",
     "typed-string",
+    "branded-type",
+    "constrained-string",
+    "validation",
     "value-object",
     "pydantic",
     "domain-model",
@@ -28,6 +31,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: Implementation :: CPython",
     "Typing :: Typed",
 ]
@@ -65,13 +69,18 @@ dev = [
 ]
 
 [project.urls]
+Changelog = "https://github.com/eldenizfamilyanskicode/base-typed-string/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/eldenizfamilyanskicode/base-typed-string#readme"
 Homepage = "https://github.com/eldenizfamilyanskicode/base-typed-string"
-Repository = "https://github.com/eldenizfamilyanskicode/base-typed-string"
 Issues = "https://github.com/eldenizfamilyanskicode/base-typed-string/issues"
+Repository = "https://github.com/eldenizfamilyanskicode/base-typed-string"
 
 [tool.setuptools]
 package-dir = { "" = "src" }
 include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "base_typed_string._version.__version__" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -102,7 +111,7 @@ fail_under = 100
 [tool.ruff]
 line-length = 88
 target-version = "py310"
-src = ["src", "tests"]
+src = ["src", "tests", "examples", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
@@ -126,12 +135,12 @@ strict_equality = true
 no_implicit_optional = true
 allow_redefinition = false
 show_error_codes = true
-packages = ["base_typed_string"]
+files = ["src", "tests", "examples", "scripts"]
 
 [tool.pyright]
 pythonVersion = "3.10"
 typeCheckingMode = "strict"
-include = ["src", "tests"]
+include = ["src", "tests", "examples", "scripts"]
 exclude = [
     "**/.*",
     "**/__pycache__/**",

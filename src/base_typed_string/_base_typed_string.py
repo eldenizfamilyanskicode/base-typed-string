@@ -2,9 +2,11 @@ from __future__ import annotations
 
 from typing import Any, TypeVar
 
-from ._exceptions import (
+from base_typed_string._exceptions import (
     BaseTypedStringInvalidInputValueError,
-    BaseTypedStringInvariantViolationError,
+)
+from base_typed_string._pydantic_support import (
+    build_typed_string_pydantic_core_schema,
 )
 
 BaseTypedStringType = TypeVar(
@@ -37,7 +39,7 @@ class BaseTypedString(str):
                 f"Got: {type(value).__name__}."
             )
 
-        return str.__new__(cls, value)
+        return str.__new__(cls, str.__str__(value))
 
     @classmethod
     def __get_pydantic_core_schema__(
@@ -58,34 +60,15 @@ class BaseTypedString(str):
         del source_type
         del handler
 
-        try:
-            from pydantic_core import (  # pyright: ignore[reportMissingImports]
-                core_schema,
-            )
-        except ImportError as import_error:
-            raise BaseTypedStringInvariantViolationError(
-                "pydantic-core is required to build BaseTypedString schema."
-            ) from import_error
-
-        def serialize_to_plain_string(value: BaseTypedString) -> str:
-            return str(value)
-
-        return core_schema.no_info_after_validator_function(
-            cls,
-            core_schema.str_schema(strict=True),
-            serialization=core_schema.plain_serializer_function_ser_schema(
-                serialize_to_plain_string,
-                return_schema=core_schema.str_schema(),
-            ),
-        )
+        return build_typed_string_pydantic_core_schema(cls)
 
     def __getnewargs__(self) -> tuple[str]:
-        return (str(self),)
+        return (str.__str__(self),)
 
     def __reduce__(
         self,
     ) -> tuple[type[BaseTypedString], tuple[str]]:
-        return (self.__class__, (str(self),))
+        return (self.__class__, (str.__str__(self),))
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({str(self)!r})"
+        return f"{self.__class__.__name__}({str.__str__(self)!r})"
